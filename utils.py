@@ -97,3 +97,26 @@ def DWD(sock, msg):
         send_msg(sock, "NOK")
     finally:
         return
+
+def UPD(sock, msg):
+    """ Upload file """
+    path = msg[4:]
+    try:
+        received = sock.recv(BUFFER_SIZE).decode()
+        filename, filesize = received.split(SEPARATOR)
+        filename = os.path.basename(filename)
+        filesize = int(filesize)
+
+        with open(filename, "wb") as f:
+            print("Receiving file...")
+            while True:
+                bytes_read = sock.recv(BUFFER_SIZE)
+                if not bytes_read:
+                    break
+                f.write(bytes_read)
+        sock.close()
+        print("File received")
+    except:
+        send_msg(sock, "NOK")
+    finally:
+        return

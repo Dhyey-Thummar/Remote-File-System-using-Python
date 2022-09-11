@@ -23,21 +23,22 @@ def handle_client(sock, addr):
         while True:
             msg = utils.recv_msg(sock)  # Blocks until received
             # complete message
+            msg = msg.lower()
             print('Received message: ' + msg)
-            if(msg == "CWD"):
+            if(msg == "cwd"):
                 utils.CWD(sock)
-            elif(msg == "LS"):
+            elif(msg == "ls"):
                 utils.LS(sock)
-            elif(msg.startswith("CD")):
+            elif(msg.startswith("cd")):
                 utils.CD(sock, msg)
-            elif(msg.startswith("DWD")):
+            elif(msg.startswith("dwd")):
                 utils.DWD(sock, msg)
                 sock.close()
                 break
-            elif(msg.startswith("UPD")):
+            elif(msg.startswith("upd")):
                 utils.UPD(sock, msg)
-            elif(msg.startswith("DWD")):
-                utils.DWD(sock, msg)
+                sock.close()
+                break
             elif(msg == "exit"):
                 print("Closing connection")
                 sock.close()
@@ -45,8 +46,8 @@ def handle_client(sock, addr):
             else:
                 utils.send_msg(sock, "Invalid command")
                 continue
-    except (ConnectionError, BrokenPipeError) as e:
-        print(e)
+    except (ConnectionError, BrokenPipeError) as err:
+        print(err)
 
 
 if __name__ == '__main__':
