@@ -1,10 +1,12 @@
 import os
+import encryption as crypt  # Path: encryption.py
 
 HOST = ''
 PORT = 4040
 SEPARATOR = "<SEPARATOR>"
 BUFFER_SIZE = 4096
 PATH = os.getcwd()
+
 
 colors = {
     'reset': f"\033[0m",
@@ -32,12 +34,13 @@ def recv_msg(sock):
             # one message per connection, so b'\0' will always be
             # the last character
             msg = data.rstrip(b'\0')
-    msg = msg.decode('utf-8')
+    msg = crypt.decrypt(msg.decode('utf-8'))
     return msg
 
 
 def prep_msg(msg):
     """ Prepare a string to be sent as a message """
+    msg = crypt.encrypt(msg)
     msg += '\0'
     return msg.encode('utf-8')
 
@@ -80,43 +83,84 @@ def CD(sock, msg):
 
 def DWD(sock, msg):
     """ Download file """
-    path = msg[4:]
+    filepath = msg[4:]
     try:
-        filename = os.path.basename(path)
-        filesize = os.path.getsize(path)
-        sock.send(f"{filename}{SEPARATOR}{filesize}".encode())
-        with open(path, "rb") as f:
+        filename = os.path.basename(filepath)
+        filesize = os.path.getsize(filepath)
+        sock.send(crypt.encrypt(
+            f"{filename}{SEPARATOR}{filesize}").encode("utf-8"))
+        with open(filepath, "r") as f:
             print("Sending file...")
             while True:
                 data = f.read(BUFFER_SIZE)
                 if not data:
                     break
-                sock.sendall(data)
+                sock.sendall(crypt.encrypt(data).encode("utf-8"))
         print("File sent")
     except:
         send_msg(sock, "NOK")
     finally:
         return
 
-def UPD(sock, msg):
-    """ Upload file """
-    path = msg[4:]
-    try:
-        received = sock.recv(BUFFER_SIZE).decode()
-        filename, filesize = received.split(SEPARATOR)
-        filename = os.path.basename(filename)
-        filesize = int(filesize)
 
-        with open(filename, "wb") as f:
+def UPD(sock):
+    """ Upload file """
+    try:
+        received = crypt.decrypt(sock.recv(BUFFER_SIZE).decode("utf-8"))
+        filename, filesize = received.split(SEPARATOR)
+        filesize = int(filesize)
+        with open(filename, "w") as f:
             print("Receiving file...")
             while True:
                 bytes_read = sock.recv(BUFFER_SIZE)
                 if not bytes_read:
                     break
-                f.write(bytes_read)
+                f.write(crypt.decrypt(bytes_read.decode("utf-8")))
         sock.close()
         print("File received")
     except:
         send_msg(sock, "NOK")
     finally:
         return
+
+
+def client_dwd_helper(sock):
+    """Helper function for client DWD command"""
+    received = crypt.decrypt(sock.recv(BUFFER_SIZE).decode("utf-8"))
+    filepath, filesize = received.split(SEPARATOR)
+    filesize = int(filesize)
+    filename = os.path.basename(filepath)
+    with open(filename, "w") as f:
+        print("Receiving file...")
+        while True:
+            bytes_read = sock.recv(BUFFER_SIZE)
+            if not bytes_read:
+                break
+            f.write(crypt.decrypt(bytes_read.decode("utf-8")))
+
+    sock.close()
+    print("File downloaded successfully")
+    return
+
+
+def client_upd_helper(sock, msg):
+    """Helper function for client UPD command"""
+    filepath = msg[4:]
+    try:
+        filename = os.path.basename(filepath)
+        filesize = os.path.getsize(filepath)
+        sock.send(crypt.encrypt(
+            f"{filename}{SEPARATOR}{filesize}").encode("utf-8"))
+        with open(filepath, "r") as f:
+            print("Sending file...")
+            while True:
+                data = f.read(BUFFER_SIZE)
+                if not data:
+                    break
+                sock.sendall(crypt.encrypt(data).encode("utf-8"))
+        print("File uploaded successfully")
+    except:
+        print("File not found")
+    finally:
+        sock.close()
+    return

@@ -36,7 +36,7 @@ def handle_client(sock, addr):
                 sock.close()
                 break
             elif(msg.startswith("upd")):
-                utils.UPD(sock, msg)
+                utils.UPD(sock)
                 sock.close()
                 break
             elif(msg == "exit"):

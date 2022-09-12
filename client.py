@@ -1,8 +1,7 @@
-import os
 import socket
 import sys
-
-import utils
+import encryption as crypt  # Path: encryption.py
+import utils  # Path: utils.py
 
 SEPARATOR = "<SEPARATOR>"
 BUFFER_SIZE = 4096
@@ -10,53 +9,23 @@ HOST = sys.argv[-1] if len(sys.argv) > 1 else '127.0.0.1'
 PORT = utils.PORT
 
 
-def client_dwd_helper(sock):
-    """Helper function for DWD command"""
-    received = sock.recv(BUFFER_SIZE).decode()
-    filename, filesize = received.split(SEPARATOR)
-    filename = os.path.basename(filename)
-    filesize = int(filesize)
-
-    with open(filename, "wb") as f:
-        print("Receiving file...")
-        while True:
-            bytes_read = sock.recv(BUFFER_SIZE)
-            if not bytes_read:
-                break
-            f.write(bytes_read)
-    sock.close()
-    print("File downloaded successfully")
-    return
-
-
-def client_upd_helper(sock, msg):
-    """Helper function for UPD command"""
-    filename = msg[4:]
-    try:
-        filesize = os.path.getsize(filename)
-        sock.send(f"{filename}{SEPARATOR}{filesize}".encode())
-        with open(filename, "rb") as f:
-            print("Sending file...")
-            while True:
-                data = f.read(BUFFER_SIZE)
-                if not data:
-                    break
-                sock.sendall(data)
-        print("File uploaded successfully")
-    except:
-        print("File not found")
-    finally:
-        sock.close()
-    sock.close()
-    return
-
-
 if __name__ == '__main__':
+    # eType = input(
+    #     "Encryption type available:\n1. Substitute\n2. Transpose\n3. None\nEnter encryption type: ")
+    # if eType == "1":
+    #     crypt.encrypt_type = "substitute"
+    #     crypt.offset = int(input("Enter offset: "))
+    # elif eType == "2":
+    #     crypt.encrypt_type = "transpose"
+    # elif eType == "3":
+    #     crypt.encrypt_type = "plain"
+
     while True:
         try:
             sock = socket.socket(socket.AF_INET,
                                  socket.SOCK_STREAM)
             sock.connect((HOST, PORT))
+            # utils.send_msg(sock, f"{crypt.encrypt_type}{SEPARATOR}{crypt.offset}")
             print('\nuser@{}:{}>'.format(HOST, PORT), sep='', end='')
             msg = input(utils.colors['red'])
             msg = msg.lower()
@@ -67,11 +36,11 @@ if __name__ == '__main__':
                 break
             elif msg.startswith('dwd'):
                 utils.send_msg(sock, msg)
-                client_dwd_helper(sock)
+                utils.client_dwd_helper(sock)
                 continue
             elif msg.startswith('upd'):
                 utils.send_msg(sock, msg)
-                client_upd_helper(sock, msg)
+                utils.client_upd_helper(sock, msg)
                 continue
             else:
                 utils.send_msg(sock, msg)  # Blocks until sent
