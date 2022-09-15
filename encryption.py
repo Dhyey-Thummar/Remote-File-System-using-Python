@@ -1,7 +1,7 @@
 # This file is for the encryption and decryption of messages
 # It contains the functions for encrypting and decrypting messages
 # Acts as the encryption layer in the network stack
-ENCRYPT_TYPE = "transpose"
+ENCRYPT_TYPE = "substitute"
 OFFSET = 2
 
 # Call the correct function based on the encryption type
@@ -18,7 +18,8 @@ def encrypt(msg, mode=ENCRYPT_TYPE):
 def substitute(msg, offset=OFFSET):
     """ Caesar cipher """
     alphabet = "abcdefghijklmnopqrstuvwxyz"
-    new_msg = ""
+    upperAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    new_msg = "" 
     for char in msg:
         if char in alphabet:
             # Get the index of the character in the alphabet
@@ -26,6 +27,8 @@ def substitute(msg, offset=OFFSET):
             # Modulo the index by 26 to get the index of the new character
             # Add the new character to the new message
             new_msg += alphabet[(alphabet.index(char) + offset) % 26]
+        elif char in upperAlphabet:
+            new_msg += upperAlphabet[(upperAlphabet.index(char) + offset) % 26]
         else:
             new_msg += char
     return new_msg
