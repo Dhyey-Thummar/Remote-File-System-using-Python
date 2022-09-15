@@ -4,9 +4,9 @@ This is a simple file service that supports the following operations:
 
 - `ls` - list files in the current directory
 - `cwd` - get the current working directory
-- `cd` - change the current working directory
-- `dwd <filename>` - download the specified file from the server
-- `upd <filename>` - upload the specified file to the server
+- `cd <filepath>` - change the current working directory to the specified path
+- `dwd <filepath>` - download the specified file from the server
+- `upd <filepath>` - upload the specified file to the server
 
 ## Underlying Architecture
 
